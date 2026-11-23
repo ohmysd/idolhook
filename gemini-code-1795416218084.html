@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>아이돌 훅 &amp; 초성 퀴즈</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Malgun Gothic', sans-serif; }
+    body {
+      background: linear-gradient(135deg, #ede9fe 0%, #e0e7ff 100%);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 16px;
+      color: #111827;
+    }
+    .app {
+      width: 100%;
+      max-width: 500px;
+      background: #ffffff;
+      border-radius: 20px;
+      padding: 24px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+    }
+    h1 { font-size: 1.4rem; color: #4338ca; text-align: center; margin-bottom: 6px; }
+    .sub { font-size: 0.9rem; color: #6b7280; text-align: center; margin-bottom: 18px; }
+    .hidden { display: none; }
+    .group-title { font-size: 0.9rem; font-weight: bold; margin: 14px 0 8px; color: #374151; }
+    .row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .opt-btn {
+      padding: 12px;
+      border: 2px solid #e5e7eb;
+      border-radius: 12px;
+      background: #fff;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    .opt-btn.active { border-color: #4338ca; background: #eef2ff; color: #4338ca; }
+    .main-btn {
+      width: 100%;
+      padding: 14px;
+      border: none;
+      border-radius: 12px;
+      background: #4338ca;
+      color: #fff;
+      font-size: 1rem;
+      font-weight: bold;
+      cursor: pointer;
+      margin-top: 14px;
+    }
+    .main-btn:hover { background: #3730a3; }
+    .status {
+      display: flex;
+      justify-content: space-between;
+      background: #f3f4f6;
+      padding: 10px 14px;
+      border-radius: 10px;
+      font-weight: bold;
+      font-size: 0.9rem;
+      margin-bottom: 14px;
+    }
+    .card {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 14px;
+      padding: 18px;
+      text-align: center;
+      margin-bottom: 14px;
+    }
+    .artist { font-size: 0.85rem; font-weight: bold; color: #4338ca; margin-bottom: 8px; }
+    .chosung { font-size: 1.6rem; font-weight: 900; letter-spacing: 3px; margin-bottom: 10px; }
+    .lyric { font-size: 0.92rem; color: #4b5563; background: #fff; padding: 10px; border-radius: 10px; }
+    .choices { display: flex; flex-direction: column; gap: 8px; }
+    .choice-btn {
+      width: 100%;
+      text-align: left;
+      padding: 12px 14px;
+      border: 2px solid #e5e7eb;
+      border-radius: 10px;
+      background: #fff;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    .choice-btn.ok { border-color: #059669; background: #d1fae5; color: #065f46; }
+    .choice-btn.no { border-color: #dc2626; background: #fee2e2; color: #991b1b; }
+    .text-input {
+      width: 100%;
+      padding: 12px;
+      border: 2px solid #d1d5db;
+      border-radius: 10px;
+      font-size: 1rem;
+    }
+    .feedback {
+      margin-top: 12px;
+      padding: 12px;
+      border-radius: 10px;
+      font-size: 0.9rem;
+      line-height: 1.5;
+    }
+    .feedback.ok { background: #d1fae5; border: 2px solid #059669; color: #064e3b; }
+    .feedback.no { background: #fee2e2; border: 2px solid #dc2626; color: #7f1d1d; }
+    .score-big { font-size: 2rem; font-weight: 900; color: #4338ca; text-align: center; margin: 14px 0; }
+    .summary { text-align: center; color: #4b5563; margin-bottom: 16px; }
+    @media (max-width: 480px) {
+      .app { padding: 18px 14px; }
+      .opt-btn, .choice-btn, .main-btn, .text-input { padding: 13px; font-size: 0.95rem; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <h1>아이돌 훅 &amp; 초성 퀴즈</h1>
+    <p class="sub">초성과 가사 힌트로 곡명을 맞혀보세요</p>
+
+    <div id="startView">
+      <div class="group-title">난이도 선택</div>
+      <div class="row">
+        <button type="button" class="opt-btn active" data-group="level" data-val="easy">쉬움</button>
+        <button type="button" class="opt-btn" data-group="level" data-val="normal">보통</button>
+      </div>
+
+      <div class="group-title">풀이 방식</div>
+      <div class="row">
+        <button type="button" class="opt-btn active" data-group="mode" data-val="choice">4지선다</button>
+        <button type="button" class="opt-btn" data-group="mode" data-val="input">직접 입력</button>
+      </div>
+
+      <button type="button" id="startBtn" class="main-btn">퀴즈 시작</button>
+    </div>
+
+    <div id="quizView" class="hidden">
+      <div class="status">
+        <span id="qNum">1 / 5</span>
+        <span id="qScore">0점</span>
+      </div>
+      <div class="card">
+        <div id="qArtist" class="artist"></div>
+        <div id="qChosung" class="chosung"></div>
+        <div id="qLyric" class="lyric"></div>
+      </div>
+
+      <div id="choiceBox" class="choices"></div>
+
+      <div id="inputBox" class="hidden">
+        <input type="text" id="ansInput" class="text-input" placeholder="곡명 입력">
+        <button type="button" id="checkInputBtn" class="main-btn">정답 확인</button>
+      </div>
+
+      <div id="feedbackBox" class="feedback hidden"></div>
+      <button type="button" id="nextBtn" class="main-btn hidden">다음 문제</button>
+    </div>
+
+    <div id="endView" class="hidden">
+      <h2 style="text-align:center;">결과 확인</h2>
+      <div id="finalScore" class="score-big">0점</div>
+      <p id="finalText" class="summary"></p>
+      <button type="button" id="retryBtn" class="main-btn">다시 하기</button>
+    </div>
+  </div>
+
+  <script>
+    const BANK = {
+      easy: [
+        { artist: "뉴진스", chosung: "ㅎㅇㅍㅂㅇ", lyric: "You're my chemical hype boy", answer: "Hype Boy", okList: ["hypeboy", "하입보이"], choices: ["Hype Boy", "Attention", "Super Shy", "Ditto"], info: "뉴진스 대표 히트곡입니다." },
+        { artist: "에스파", chosung: "ㅅㅍㄴㅂ", lyric: "사건은 다가와 Ah Oh Ay", answer: "Supernova", okList: ["supernova", "수퍼노바", "슈퍼노바"], choices: ["Next Level", "Supernova", "Spicy", "Drama"], info: "에스파의 강렬한 신스 팝 곡입니다." },
+        { artist: "아이브", chosung: "ㄹㅂㄷㅇㅂ", lyric: "네가 참 궁금해 그건 너도 마찬가지", answer: "LOVE DIVE", okList: ["lovedive", "러브다이브"], choices: ["ELEVEN", "LOVE DIVE", "After LIKE", "I AM"], info: "아이브의 대표 타이틀곡입니다." },
+        { artist: "방탄소년단", chosung: "ㄷㅇㄴㅁㅇㅌ", lyric: "Shining through the city with a little funk and soul", answer: "Dynamite", okList: ["dynamite", "다이너마이트"], choices: ["Butter", "Dynamite", "DNA", "봄날"], info: "밝고 경쾌한 디스코 팝 곡입니다." },
+        { artist: "세븐틴", chosung: "ㅅㅇㄱ", lyric: "Darumdarimda 구름을 타고 여기저기로", answer: "손오공", okList: ["손오공", "super"], choices: ["아주 NICE", "손오공", "음악의 신", "예쁘다"], info: "세븐틴 미니 10집 타이틀곡입니다." }
+      ],
+      normal: [
+        { artist: "르세라핌", chosung: "ㅇㅌㅍㄹㅈ", lyric: "더 높이 가줄게 내가 바랐던 세계 젤 위에", answer: "ANTIFRAGILE", okList: ["antifragile", "안티프래자일"], choices: ["FEARLESS", "ANTIFRAGILE", "UNFORGIVEN", "EASY"], info: "단단해지는 에너지를 담은 곡입니다." },
+        { artist: "데이식스", chosung: "ㅎㅍㅇㅈㄱㄷㅅㅇㄱ", lyric: "지금 내가 써 내려가는 건 한 페이지가 될 수 있게", answer: "한 페이지가 될 수 있게", okList: ["한페이지가될수있게", "timeofourlife"], choices: ["예뻤어", "한 페이지가 될 수 있게", "Happy", "콩그레츄레이션스"], info: "청춘을 노래한 밴드 곡입니다." },
+        { artist: "(여자)아이들", chosung: "ㅋㅋ", lyric: "I'm a 퀸카 You wanna be the 퀸카", answer: "퀸카", okList: ["퀸카", "queencard"], choices: ["TOMBOY", "Nxde", "퀸카", "나는 아픈 건 딱 질색이니까"], info: "유쾌한 후렴구가 인상적인 곡입니다." },
+        { artist: "투모로우바이투게더", chosung: "0X1=ㄹㅂㅅ", lyric: "I know I love you 이 제로의 세계 속", answer: "0X1=LOVESONG", okList: ["0x1=lovesong", "lovesong", "러브송"], choices: ["0X1=LOVESONG", "Sugar Rush Ride", "Deja Vu", "Crown"], info: "록 사운드가 돋보이는 타이틀곡입니다." },
+        { artist: "라이즈", chosung: "ㄱㅇㄱㅌ", lyric: "C'mon get a guitar 리듬에 맞춰", answer: "Get A Guitar", okList: ["getaguitar", "겟어기타"], choices: ["Get A Guitar", "Love 119", "Boom Boom Bass", "Siren"], info: "경쾌한 기타 리프가 특징인 곡입니다." }
+      ]
+    };
+
+    let level = "easy";
+    let mode = "choice";
+    let list = [];
+    let idx = 0;
+    let score = 0;
+    let done = false;
+
+    const startView = document.getElementById("startView");
+    const quizView = document.getElementById("quizView");
+    const endView = document.getElementById("endView");
+
+    document.querySelectorAll(".opt-btn").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const g = btn.dataset.group;
+        document.querySelectorAll(`.opt-btn[data-group="${g}"]`).forEach((b) => b.classList.remove("active"));
+        btn.classList.add("active");
+        if (g === "level") level = btn.dataset.val;
+        if (g === "mode") mode = btn.dataset.val;
+      });
+    });
+
+    document.getElementById("startBtn").addEventListener("click", () => {
+      list = BANK[level];
+      idx = 0;
+      score = 0;
+      startView.classList.add("hidden");
+      endView.classList.add("hidden");
+      quizView.classList.remove("hidden");
+      showQ();
+    });
+
+    function showQ() {
+      done = false;
+      const item = list[idx];
+      document.getElementById("qNum").textContent = `${idx + 1} / ${list.length}`;
+      document.getElementById("qScore").textContent = `${score}점`;
+      document.getElementById("qArtist").textContent = `아티스트: ${item.artist}`;
+      document.getElementById("qChosung").textContent = item.chosung;
+      document.getElementById("qLyric").textContent = item.lyric;
+
+      const fb = document.getElementById("feedbackBox");
+      fb.className = "feedback hidden";
+      fb.textContent = "";
+      document.getElementById("nextBtn").classList.add("hidden");
+
+      const choiceBox = document.getElementById("choiceBox");
+      const inputBox = document.getElementById("inputBox");
+      const ansInput = document.getElementById("ansInput");
+
+      if (mode === "choice") {
+        choiceBox.classList.remove("hidden");
+        inputBox.classList.add("hidden");
+        choiceBox.innerHTML = "";
+        item.choices.forEach((c) => {
+          const b = document.createElement("button");
+          b.type = "button";
+          b.className = "choice-btn";
+          b.textContent = c;
+          b.addEventListener("click", () => checkChoice(c, b));
+          choiceBox.appendChild(b);
+        });
+      } else {
+        choiceBox.classList.add("hidden");
+        inputBox.classList.remove("hidden");
+        ansInput.value = "";
+        ansInput.disabled = false;
+        ansInput.focus();
+      }
+    }
+
+    function checkChoice(picked, btn) {
+      if (done) return;
+      done = true;
+      const item = list[idx];
+      const isRight = picked === item.answer;
+      document.querySelectorAll(".choice-btn").forEach((b) => {
+        b.disabled = true;
+        if (b.textContent === item.answer) b.classList.add("ok");
+      });
+      if (!isRight) btn.classList.add("no");
+      finishQ(isRight, item);
+    }
+
+    function checkText() {
+      if (done) return;
+      const ansInput = document.getElementById("ansInput");
+      const raw = ansInput.value.trim();
+      if (!raw) {
+        alert("곡명을 입력해 주세요.");
+        return;
+      }
+      done = true;
+      ansInput.disabled = true;
+      const item = list[idx];
+      const norm = raw.toLowerCase().replace(/\s+/g, "");
+      const isRight = item.okList.includes(norm);
+      finishQ(isRight, item);
+    }
+
+    document.getElementById("checkInputBtn").addEventListener("click", checkText);
+
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" && !quizView.classList.contains("hidden")) {
+        if (!done && mode === "input") checkText();
+        else if (done && !document.getElementById("nextBtn").classList.contains("hidden")) nextQ();
+      }
+    });
+
+    function finishQ(isRight, item) {
+      const fb = document.getElementById("feedbackBox");
+      if (isRight) {
+        score += 20;
